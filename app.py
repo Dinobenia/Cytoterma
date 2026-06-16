@@ -194,3 +194,86 @@ for epoch in range(epochs):
         print(f"  > Novo melhor modelo salvo em: {NOME_DO_ARQUIVO} (Loss: {best_val_loss:.4f})")
 
 print("[INFO] Treinamento finalizado!")
+
+
+# ==============================================================================
+# 7. AVALIAÇÃO FINAL NO CONJUNTO DE TESTE (MÉTRICAS)
+# ==============================================================================
+print("\n[INFO] Carregando o melhor modelo salvo para avaliação final...")
+model.load_state_dict(torch.load(NOME_DO_ARQUIVO))
+model.eval()
+
+correct, total = 0, 0
+all_preds = []
+all_labels = []
+
+with torch.no_grad():
+    for images, labels in test_loader: 
+        images, labels = images.to(device), labels.to(device)
+        outputs = model(images)
+        _, preds = torch.max(outputs, 1)
+        
+        correct += (preds == labels).sum().item()
+        total += labels.size(0)
+        all_preds.extend(preds.cpu().numpy())
+        all_labels.extend(labels.cpu().numpy())
+
+print(f"\nAcurácia final no conjunto de TESTE: {100 * correct / total:.2f}%")
+print("\n--- Relatório de Classificação ---")
+print(classification_report(all_labels, all_preds, target_names=target_names))
+
+print("\n--- Matriz de Confusão (Calculada) ---")
+cm = confusion_matrix(all_labels, all_preds)
+print(cm)
+
+
+# ==============================================================================
+# 8. EXPLICABILIDADE: MAPA DE SALIÊNCIA (XAI)
+# ==============================================================================
+def saliency_map(model, img_tensor):
+    img_tensor.requires_grad = True
+    output = model(img_tensor)
+    class_idx = torch.argmax(output)
+    
+    model.zero_grad()
+    output[0, class_idx].backward()
+    
+    grads = img_tensor.grad.abs()
+    grads = grads[0].cpu().numpy()
+    
+    heatmap = np.mean(grads, axis=0)
+    heatmap = np.maximum(heatmap, 0)
+    
+    if heatmap.max() > 0:
+        heatmap /= heatmap.max()
+    return heatmap
+
+print("\n[INFO] Gerando mapa de saliência explicativo...")
+sample_img, _ = test_dataset[0]
+input_tensor = sample_img.unsqueeze(0).to(device)
+heatmap = saliency_map(model, input_tensor)
+
+# Desnormalizar a imagem original para plotagem correta
+inv_normalize = transforms.Normalize(
+    mean=[-0.485/0.229, -0.456/0.224, -0.406/0.225],
+    std=[1/0.229, 1/0.224, 1/0.225]
+)
+img_to_plot = inv_normalize(sample_img).permute(1, 2, 0).cpu().numpy()
+img_to_plot = np.clip(img_to_plot, 0, 1)
+
+# Salvando a figura gerada em vez de apenas exibir (bom para documentar no Git)
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.title("Imagem Original (Térmica)")
+plt.imshow(img_to_plot)
+plt.axis('off')
+
+plt.subplot(1, 2, 2)
+plt.title("Mapa de Saliência (Regiões de Foco)")
+plt.imshow(img_to_plot)
+plt.imshow(cv2.resize(heatmap, (224, 224)), cmap='jet', alpha=0.5)
+plt.axis('off')
+
+plt.tight_layout()
+plt.savefig("Cytoterma/resultado_saliencia.png")
+print("[INFO] Script completo e imagem de saliência salva em Cytoterma/resultado_saliencia.png")
