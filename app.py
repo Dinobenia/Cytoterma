@@ -105,3 +105,44 @@ test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
 print(f"[INFO] Dataset processado com sucesso!")
 print(f"Total: {total_size} imagens -> Treino: {train_size} | Val: {val_size} | Teste: {test_size}")
+
+
+# ==============================================================================
+# 4. CONFIGURAÇÃO DA ARQUITETURA DO MODELO (FINE-TUNING RESNET-18)
+# ==============================================================================
+# Carregando a ResNet-18 com pesos pré-treinados padrão do ImageNet
+model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+
+# 1. Congelar todos os parâmetros do modelo primeiro
+for param in model.parameters():
+    param.requires_grad = False
+
+# 2. Descongelar as camadas finais (layer3 e layer4) para o ajuste fino
+for param in model.layer3.parameters():
+    param.requires_grad = True
+for param in model.layer4.parameters():
+    param.requires_grad = True
+
+# 3. Substituir a última camada linear (classificador) para o nosso problema (2 classes)
+num_ftrs = model.fc.in_features
+model.fc = nn.Linear(num_ftrs, 2)
+
+# Enviar o modelo para a GPU ou CPU
+model = model.to(device)
+
+
+# ==============================================================================
+# 5. CRITÉRIO DE PERDA E OTIMIZADOR DIFERENCIAL
+# ==============================================================================
+criterion = nn.CrossEntropyLoss()
+
+# Criando grupos de parâmetros com taxas de aprendizado (Learning Rates) diferentes
+params_to_optimize = [
+    {'params': model.fc.parameters(), 'lr': 0.001},         # Camada nova aprende mais rápido
+    {'params': model.layer3.parameters(), 'lr': 0.0001},    # Camada profunda ajusta devagar
+    {'params': model.layer4.parameters(), 'lr': 0.0001}     # Camada profunda ajusta devagar
+]
+
+optimizer = optim.Adam(params_to_optimize)
+
+print("[INFO] Modelo ResNet-18 e Otimizador Diferencial configurados com sucesso!")
