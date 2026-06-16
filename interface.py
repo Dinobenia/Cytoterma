@@ -98,7 +98,7 @@ if uploaded_file:
     # Lógica IF / ELSE para exibição do Banner Médico
     if classe == 0:
         st.markdown(f"""<div class="result-banner sick-banner">
-            <b style="font-size: 1.6rem;">🚨 ALERTA: CLASSE 0 — SICK (ANÔMALO)</b><br>
+            <b style="font-size: 1.6rem;">🚨 ALERTA: CLASSE 0 — SICK </b><br>
             Evidências de hipertermia tecidual e assimetria vascular. Recomenda-se exame clínico urgente.
         </div>""", unsafe_allow_html=True)
     else:
@@ -108,17 +108,9 @@ if uploaded_file:
         </div>""", unsafe_allow_html=True)
 
     # Exibição das Imagens em Abas
-    t1, t2 = st.tabs(["📊 Visualização do Exame", "📖 Legenda Médica"])
+    t1 = st.tabs(["📊 Visualização do Exame"])
     
     with t1:
         c1, c2 = st.columns(2)
         c1.image(image, caption="Original", use_container_width=True)
-        c2.info("O Mapa de Saliência será processado no laudo final em PDF.") # Simplificado para fluidez
         
-    with t2:
-        st.markdown(f"""<div class="legenda-box">
-            <b style="color:#E53E3E;">🔴 PADRÃO SICK:</b> Gradientes térmicos discrepantes (Δt ≥ 1°C), 
-            presença de hot spots ou ramificações vasculares com alta emissão infravermelha.<br><br>
-            <b style="color:#38A169;">🔵 PADRÃO NORMAL:</b> Simetria bilateral perfeita, dissipação 
-            de calor uniforme e ausência de focos de calor discrepantes.
-        </div>""", unsafe_allow_html=True)
