@@ -146,3 +146,51 @@ params_to_optimize = [
 optimizer = optim.Adam(params_to_optimize)
 
 print("[INFO] Modelo ResNet-18 e Otimizador Diferencial configurados com sucesso!")
+
+
+# ==============================================================================
+# 6. LOOP DE TREINAMENTO E VALIDAÇÃO
+# ==============================================================================
+epochs = 25
+best_val_loss = float('inf')
+NOME_DO_ARQUIVO = "Cytoterma/models/melhor_modelo_finetuned.pth"
+
+print("\n[INFO] Iniciando o treinamento do modelo por 25 épocas...")
+
+for epoch in range(epochs):
+    # --- FASE DE TREINO ---
+    model.train()
+    total_train_loss = 0
+    for images, labels in train_loader:
+        images, labels = images.to(device), labels.to(device)
+        
+        optimizer.zero_grad()
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+        
+        total_train_loss += loss.item()
+
+    # --- FASE DE VALIDAÇÃO ---
+    model.eval()
+    total_val_loss = 0
+    with torch.no_grad():
+        for images, labels in val_loader:
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            total_val_loss += loss.item()
+            
+    avg_train_loss = total_train_loss / len(train_loader)
+    avg_val_loss = total_val_loss / len(val_loader)
+    
+    print(f"Época {epoch+1:02d}/{epochs} | Train Loss: {avg_train_loss:.4f} | Val Loss: {avg_val_loss:.4f}")
+
+    # Salvando o melhor modelo com base na perda de validação
+    if avg_val_loss < best_val_loss:
+        best_val_loss = avg_val_loss
+        torch.save(model.state_dict(), NOME_DO_ARQUIVO)
+        print(f"  > Novo melhor modelo salvo em: {NOME_DO_ARQUIVO} (Loss: {best_val_loss:.4f})")
+
+print("[INFO] Treinamento finalizado!")
