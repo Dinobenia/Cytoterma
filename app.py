@@ -1,6 +1,6 @@
-# ==============================================================================
-# 1. IMPORTAÇÕES E CONFIGURAÇÕES INICIAIS
-# ==============================================================================
+
+# ----------------------- IMPORTAÇÕES E CONFIGURAÇÕES INICIAIS ----------------------- 
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -27,9 +27,9 @@ if torch.cuda.is_available():
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"[INFO] Ambiente configurado. Usando dispositivo: {device}")
 
-# ==============================================================================
-# 2. CONFIGURAÇÕES DE TRANSFORMAÇÕES (DATA AUGMENTATION)
-# ==============================================================================
+
+# ----------------------- CONFIGURAÇÕES DE TRANSFORMAÇÕES ----------------------- 
+
 transform_train = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.RandomHorizontalFlip(),
@@ -45,9 +45,8 @@ transform_test = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-# ==============================================================================
-# 3. MAPEAMENTO DO DATASET E CRIAÇÃO DOS LOADERS
-# ==============================================================================
+# ----------------------- MAPEAMENTO DO DATASET E CRIAÇÃO DOS LOADERS ----------------------- 
+
 class TransformedSubset(Dataset):
     def __init__(self, subset, transform=None):
         self.subset = subset
@@ -59,8 +58,7 @@ class TransformedSubset(Dataset):
     def __len__(self):
         return len(self.subset)
 
-# CAMINHO CORRIGIDO BASEADO NO SEU DIRETÓRIO
-data_dir = "/kaggle/input/datasets/thilak02/breast-cancer-detection-using-thermography/BCD_Dataset"
+data_dir = "/kaggle/input/datasets/BCD_Dataset"
 
 full_dataset = datasets.ImageFolder(data_dir, transform=None)
 
@@ -93,9 +91,9 @@ test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
 print(f"[INFO] Dataset processado! Total: {total_size} imagens (Treino: {train_size}, Val: {val_size}, Teste: {test_size})")
 
-# ==============================================================================
-# 4. CONFIGURAÇÃO DA ARQUITETURA DO MODELO (FINE-TUNING RESNET-18)
-# ==============================================================================
+
+# ----------------------- ONFIGURAÇÃO DA ARQUITETURA DO MODELO (FINE-TUNING RESNET-18) ----------------------- 
+
 model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
 
 for param in model.parameters():
@@ -108,9 +106,9 @@ num_ftrs = model.fc.in_features
 model.fc = nn.Linear(num_ftrs, 2)
 model = model.to(device)
 
-# ==============================================================================
-# 5. CRITÉRIO DE PERDA E OTIMIZADOR DIFERENCIAL
-# ==============================================================================
+
+# ----------------------- RITÉRIO DE PERDA E OTIMIZADOR DIFERENCIAL ----------------------- 
+
 criterion = nn.CrossEntropyLoss()
 params_to_optimize = [
     {'params': model.fc.parameters(), 'lr': 0.001},
@@ -120,9 +118,9 @@ params_to_optimize = [
 optimizer = optim.Adam(params_to_optimize)
 print("[INFO] Modelo ResNet-18 e Otimizador Diferencial configurados!")
 
-# ==============================================================================
-# 6. LOOP DE TREINAMENTO E VALIDAÇÃO
-# ==============================================================================
+
+# ----------------------- LOOP DE TREINAMENTO E VALIDAÇÃO ----------------------- 
+
 epochs = 25
 best_val_loss = float('inf')
 NOME_DO_ARQUIVO = "Cytoterma/models/melhor_modelo_finetuned.pth"
@@ -159,9 +157,9 @@ for epoch in range(epochs):
 
 print("[INFO] Treinamento finalizado!")
 
-# ==============================================================================
-# 7. AVALIAÇÃO FINAL NO CONJUNTO DE TESTE (MÉTRICAS)
-# ==============================================================================
+
+# ----------------------- AVALIAÇÃO FINAL NO CONJUNTO DE TESTE (MÉTRICAS) ----------------------- 
+
 print("\n[INFO] Carregando o melhor modelo para avaliação final...")
 model.load_state_dict(torch.load(NOME_DO_ARQUIVO))
 model.eval()
@@ -183,9 +181,8 @@ print(f"\nAcurácia final no conjunto de TESTE: {100 * correct / total:.2f}%")
 print("\n--- Relatório de Classificação ---")
 print(classification_report(all_labels, all_preds, target_names=target_names))
 
-# ==============================================================================
-# 8. EXPLICABILIDADE: MAPA DE SALIÊNCIA (XAI)
-# ==============================================================================
+# ----------------------- EXPLICABILIDADE: MAPA DE SALIÊNCIA (XAI) ----------------------- 
+
 def saliency_map(model, img_tensor):
     img_tensor.requires_grad = True
     output = model(img_tensor)
