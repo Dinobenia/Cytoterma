@@ -21,7 +21,7 @@ def carregar_modelo():
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, 2)
     # Carrega os pesos gerados no treino
-    model.load_state_dict(torch.load("Cytoterma/models/melhor_modelo_finetuned.pth", map_location=device))
+    model.load_state_dict(torch.load("models/melhor_modelo_finetuned.pth", map_location=device))
     model.to(device)
     model.eval()
     return model
