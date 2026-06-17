@@ -60,7 +60,7 @@ class TransformedSubset(Dataset):
         return len(self.subset)
 
 # CAMINHO CORRIGIDO BASEADO NO SEU DIRETÓRIO
-data_dir = "/kaggle/input/datasets/BCD_Dataset"
+data_dir = "/kaggle/input/datasets/thilak02/breast-cancer-detection-using-thermography/BCD_Dataset"
 
 full_dataset = datasets.ImageFolder(data_dir, transform=None)
 
